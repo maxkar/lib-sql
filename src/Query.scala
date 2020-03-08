@@ -3,7 +3,27 @@ package ru.maxkar.lib.sql
 import java.sql.Connection
 import java.sql.PreparedStatement
 
-final class Query(fragments: Seq[String], params: Seq[SqlParameter]) {
+
+/**
+ * A query to a database. Each query could be characterized by the query text
+ * with potential placeholders and corresponding argument values for each
+ * generated placehodler.
+ *
+ * @param fragments textual fragments of the query.
+ * @param subqueries nested query fragments.
+ */
+final class Query(fragments: Seq[String], subqueries: Seq[QueryFragment]) extends QueryFragment {
+
+  /**
+   * Invokes a callback on a statement prepared for the given connection.
+   *
+   * The prepared statement is created based on a text of this query and
+   * all the parameters are set.
+   *
+   * @tparam T type of query result.
+   * @param conn connection to use.
+   * @param cb callback to invoke on the prepared statement.
+   */
   def withPreparedStatement[T](
       conn: Connection)(cb: PreparedStatement => T): T = {
     val queryText = generateQuery()
@@ -18,17 +38,9 @@ final class Query(fragments: Seq[String], params: Seq[SqlParameter]) {
   }
 
 
-  def setParameters(ps: PreparedStatement, startIdx: Int): Int = {
-    var idx = startIdx
-    val paramIter = params.iterator
-
-    while (paramIter.hasNext)
-      idx = paramIter.next.setParameters(ps, idx)
-
-    return idx
-  }
-
-
+  /**
+   * Generates a query text with placeholders.
+   */
   def generateQuery(): String = {
     val sb = new StringBuilder()
     appendQueryText(sb)
@@ -36,14 +48,24 @@ final class Query(fragments: Seq[String], params: Seq[SqlParameter]) {
   }
 
 
-  def appendQueryText(sb: StringBuilder): Unit = {
+  override def setParameters(ps: PreparedStatement, startIdx: Int): Int = {
+    var idx = startIdx
+    val subqueryIter = subqueries.iterator
+
+    while (subqueryIter.hasNext)
+      idx = subqueryIter.next.setParameters(ps, idx)
+
+    return idx
+  }
+
+
+  override def appendQueryText(sb: StringBuilder): Unit = {
     val fragIter = fragments.iterator
-    val paramIter = params.iterator
+    val subqueryIter = subqueries.iterator
     sb ++= fragIter.next
-    while (paramIter.hasNext) {
-      paramIter.next.appendQueryText(sb)
+    while (subqueryIter.hasNext) {
+      subqueryIter.next.appendQueryText(sb)
       sb ++= fragIter.next
     }
   }
-
 }

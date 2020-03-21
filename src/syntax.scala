@@ -24,11 +24,12 @@ package object syntax {
    * @param rowParser parser for a single row.
    * @return parser for the whole result set.
    */
-  def many[T](rowParser: ResultSet => T): ResultSet => Seq[T] =
+  def many[T](rowParser: ResultRow => T): ResultSet => Seq[T] =
     rs => {
       val res = new ArrayBuffer[T]
+      val rq = new ResultRow(rs)
       while (rs.next())
-        res += rowParser(rs)
+        res += rowParser(rq)
       res.toSeq
     }
 
@@ -40,16 +41,17 @@ package object syntax {
    * @param rowParser parser for a single row.
    * @return parser for the whole result set.
    */
-  def atLeastOne[T](rowParser: ResultSet => T): ResultSet => Seq[T] =
+  def atLeastOne[T](rowParser: ResultRow => T): ResultSet => Seq[T] =
     rs => {
       if (!rs.next())
         throw new SQLException("Expected at least 1 row but got none")
 
       val res = new ArrayBuffer[T]
-      res += rowParser(rs)
+      val rq = new ResultRow(rs)
+      res += rowParser(rq)
 
       while (rs.next())
-        res += rowParser(rs)
+        res += rowParser(rq)
       res.toSeq
     }
 
@@ -61,12 +63,13 @@ package object syntax {
    * @param rowParser parser for a single row.
    * @return parser for entire result set ensuring there is exactly one row.
    */
-  def one[T](rowParser: ResultSet => T): ResultSet => T =
+  def one[T](rowParser: ResultRow => T): ResultSet => T =
     rs => {
       if (!rs.next())
         throw new SQLException("Expected 1 row but got none")
 
-      val res = rowParser(rs)
+      val rq = new ResultRow(rs)
+      val res = rowParser(rq)
 
       if (rs.next())
         throw new SQLException("Expected 1 row but got at least 2")
@@ -81,12 +84,13 @@ package object syntax {
    * @param rowParser parser for a single row.
    * @return parser for entire result set ensuring there is at most one row.
    */
-  def optional[T](rowParser: ResultSet => T): ResultSet => Option[T] =
+  def optional[T](rowParser: ResultRow => T): ResultSet => Option[T] =
     rs => {
       if (!rs.next())
         None
       else {
-        val res = rowParser(rs)
+        val rq = new ResultRow(rs)
+        val res = rowParser(rq)
         if (rs.next())
           throw new SQLException("Expected at most 1 row but got at least 2")
         Some(res)

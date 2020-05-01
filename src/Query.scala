@@ -65,7 +65,7 @@ final class Query(fragments: Seq[String], subqueries: Seq[QueryFragment]) extend
    * @param connMgr manager of database connections.
    * @return number of rows updated.
    */
-  def update()(implicit connMgr: ConnectionManager): Int =
+  def update()(implicit connMgr: DBContext): Int =
     connMgr.withConnection(conn => update(conn))
 
 
@@ -107,7 +107,7 @@ final class Query(fragments: Seq[String], subqueries: Seq[QueryFragment]) extend
    */
   def select[T](
         callback: ResultSet => T)(
-        implicit connMgr: ConnectionManager)
+        implicit connMgr: DBContext)
       : T =
     connMgr.withConnection(conn => select(conn, callback))
 

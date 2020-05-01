@@ -6,9 +6,14 @@ import java.sql.Connection
 /**
  * An implementation of the connection manager relying on connection pool.
  */
-private final class DatasourceConnectionManager(
+final class DatasourceContext(
       ds: DataSource)
-    extends ConnectionManager {
+    extends AutocommitDBContext {
+
+  override def withDbConnection[T](cb : DBConnection => T): T =
+    withConnection(jdbcConn =>
+      cb(new AutocommitConnection(jdbcConn))
+    )
 
   override def withConnection[T](cb : Connection => T): T = {
     val conn = ds.getConnection()

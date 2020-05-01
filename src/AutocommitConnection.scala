@@ -7,9 +7,9 @@ import java.util.concurrent.Semaphore
  * An implementation of the connection manager sharing access
  * to exactly one connection.
  */
-private final class ConnectionConnectionManager(
+final class AutocommitConnection(
       conn: Connection)
-    extends ConnectionManager {
+    extends DBConnection with AutocommitDBContext {
   /**
    * Synchronization primitive for our manager.
    *

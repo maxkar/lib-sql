@@ -51,9 +51,9 @@ trait AutocommitDBContext extends DBContext {
         val tx = new Transaction[IL](conn)
         val res = cb(tx)
         if (tx.isRollbackOnly)
-          conn.commit()
-        else
           conn.rollback()
+        else
+          conn.commit()
         res
       } catch {
         case e: Throwable =>

@@ -39,9 +39,9 @@ trait DBContext {
         val tx = new Transaction(conn)
         val res = cb(tx)
         if (tx.isRollbackOnly)
-          conn.commit()
-        else
           conn.rollback()
+        else
+          conn.commit()
         res
       } catch {
         case e: Throwable =>
